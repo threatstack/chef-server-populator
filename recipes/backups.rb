@@ -56,5 +56,5 @@ cron 'Chef Server Backups' do
   node[:chef_server_populator][:backup][:schedule].each do |k,v|
     send(k,v)
   end
-  path "/opt/chef/embedded/bin/:$PATH"
+  path '/opt/chef/embedded/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 end
