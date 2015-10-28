@@ -7,11 +7,19 @@ end
 # if backup pull files include restore
 
 if(node[:chef_server_populator][:backup][:remote][:connection])
-  chef_gem 'miasma'
+  chef_gem 'miasma-aws' do
+    compile_time true
+    version '0.1.26'
+  end
+
+  chef_gem 'miasma' do
+    compile_time true
+    version '0.2.30'
+  end
   require 'miasma'
   remote_creds = node[:chef_server_populator][:backup][:remote][:connection]
   remote_directory = node[:chef_server_populator][:backup][:remote][:directory]
-  remote = Miasma.api(:provider => remote_creds[:provider].to_s.downcase, :type => 'storage', :credentials => remote_creds[:credentials])
+  remote = Miasma.api(:provider => remote_creds[:provider].to_s.downcase, :type => 'storage', :credentials => {:aws_iam_instance_profile => true})
   remote_bucket = remote.buckets.get(remote_directory)
   if(remote_bucket && gz_file = remote_bucket.files.get(File.join(node[:chef_server_populator][:backup][:remote][:file_prefix], 'latest.tgz')))
     dump_file = remote_bucket.files.get(File.join(node[:chef_server_populator][:backup][:remote][:file_prefix], 'latest.dump'))

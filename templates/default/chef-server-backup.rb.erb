@@ -52,13 +52,12 @@ begin
       :user => 'opscode-pgsql',
       :cwd => config[:dir]
   )
-
   backup.run_command
   backup.error!
 
 
   backup_data = Mixlib::ShellOut.new(
-    "tar -czf #{data_file} /var/opt/opscode /etc/opscode",
+    "tar -czf #{data_file} --exclude=/var/opt/opscode/rabbitmq/log --exclude=/var/opt/opscode/postgresql/*/data /var/opt/opscode /etc/opscode",
     :cwd => config[:dir]
   )
   backup_data.run_command
@@ -96,6 +95,7 @@ if(remote_creds)
         remote_file.body = File.open(file, 'r')
         remote_file.save
       end
+      File.delete(file)
     end
   else
     $stderr.puts 'ERROR: No remote directory defined for backup storage!'
