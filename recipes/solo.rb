@@ -7,6 +7,11 @@ end
 # if backup pull files include restore
 
 if(node[:chef_server_populator][:backup][:remote][:connection])
+  chef_gem 'http' do
+    compile_time true
+    version '0.9.8'
+  end
+
   chef_gem 'miasma-aws' do
     compile_time true
     version '0.1.26'
