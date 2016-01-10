@@ -24,6 +24,6 @@ else
     node.set['chef-server'][:configuration][:bookshelf][:url] = "https://#{node[:fqdn]}"
 end
 
-node.set['chef-server'][:configration][:postgresql][:shared_buffers] = (node.memory.total.to_i / 1024) / 2
+node.set['chef-server'][:configration][:postgresql][:shared_buffers] = "#{(node.memory.total.to_i / 1024) / 2}MB"
 
 include_recipe 'chef-server'
