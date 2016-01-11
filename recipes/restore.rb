@@ -62,7 +62,7 @@ execute 'restore tarball data' do
 end
 
 execute 'restore chef server restart' do
-  command 'chef-server-ctl restart'
+  command 'chef-server-ctl start'
   creates '/etc/opscode/restore.json'
 end
 
