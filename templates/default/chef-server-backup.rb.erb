@@ -57,7 +57,7 @@ begin
 
 
   backup_data = Mixlib::ShellOut.new(
-    "tar -czf #{data_file} --exclude=/var/opt/opscode/rabbitmq/log --exclude=/var/opt/opscode/postgresql/*/data /var/opt/opscode /etc/opscode",
+    "tar -czf #{data_file} --exclude=/etc/opscode/restore.json --exclude=/var/opt/opscode/rabbitmq/log --exclude=/var/opt/opscode/postgresql/*/data /var/opt/opscode /etc/opscode",
     :cwd => config[:dir]
   )
   backup_data.run_command
