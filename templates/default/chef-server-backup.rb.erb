@@ -57,7 +57,7 @@ begin
 
 
   backup_data = Mixlib::ShellOut.new(
-    "tar -czf #{data_file} --exclude=/etc/opscode/restore.json --exclude=/var/opt/opscode/rabbitmq/log --exclude=/var/opt/opscode/postgresql/*/data /var/opt/opscode /etc/opscode",
+    "tar -czf #{data_file} --exclude=/etc/opscode/restore.json --exclude=/var/opt/opscode/rabbitmq/log /var/opt/opscode /etc/opscode",
     :cwd => config[:dir]
   )
   backup_data.run_command
@@ -82,7 +82,7 @@ end
 
 if(remote_creds)
   if(remote_directory)
-    remote = Miasma.api(:provider => remote_creds[:provider].to_s.downcase, :type => 'storage', :credentials => remote_creds[:credentials])
+    remote = Miasma.api(:provider => remote_creds[:provider].to_s.downcase, :type => 'storage', :credentials => {:aws_iam_instance_profile => true})
     directory = remote.buckets.get(remote_directory)
     [db_file, data_file].each do |file|
       [ :date_stamped, :latest ].each do |type|
