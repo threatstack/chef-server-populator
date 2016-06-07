@@ -24,7 +24,7 @@ else
     node.set[:chef_server_populator][:chef_server][:configuration][:bookshelf][:url] = "https://#{node[:fqdn]}"
 end
 
-node.set[:chef_server_populator][:chef_server][:configration][:postgresql][:shared_buffers] = "#{(node.memory.total.to_i / 1024) / 2}MB"
+node.set[:chef_server_populator][:chef_server][:configuration][:postgresql][:shared_buffers] = "#{(node.memory.total.to_i / 1024) / 2}MB"
 
 mash_maker = lambda do |x|
   if(x.is_a?(Hash))
