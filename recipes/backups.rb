@@ -1,3 +1,9 @@
+%w(Gemfile Gemfile.lock).each do |f|
+  cookbook_file "/etc/opscode/#{f}" do
+    action :create
+  end
+end
+
 directory node[:chef_server_populator][:backup][:dir] do
   recursive true
   owner 'opscode-pgsql'
@@ -48,7 +54,10 @@ template '/usr/local/bin/chef-server-backup' do
 end
 
 cron 'Chef Server Backups' do
-  command '/usr/local/bin/chef-server-backup'
+  command <<-EOF
+  BUNDLE_GEMFILE=/etc/opscode/Gemfile bundle install --path /etc/opscode/.vendor
+  BUNDLE_GEMFILE=/etc/opscode/Gemfile bundle exec /usr/local/bin/chef-server-backup
+  EOF
   node[:chef_server_populator][:backup][:schedule].each do |k,v|
     send(k,v)
   end

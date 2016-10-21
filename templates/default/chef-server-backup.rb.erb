@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 
-require 'miasma'
+require 'json'
+require 'fog/aws'
 require 'multi_json'
 require 'mixlib/shellout'
+require 'socket'
 
 DEFAULT_CONFIGURATION_PATH = '<%= node[:chef_server_populator][:configuration_directory] %>/backup.json'
 
@@ -17,6 +19,10 @@ else
     :symbolize_keys => true
   )
 end
+
+s3 = Fog::Storage.new(provider: 'AWS',
+       region: config[:remote][:connection][:credentials][:region],
+       use_iam_profile: true)
 
 server_manifest = MultiJson.load(
   File.read('/opt/opscode/version-manifest.json'),
@@ -40,7 +46,7 @@ data_file = File.join(
 )
 
 # stop services that write data we're backing up
-%w( bookshelf opscode-erchef ).each do |svc|
+%w(bookshelf opscode-erchef opscode-solr4).each do |svc|
   stop_service = Mixlib::ShellOut.new("chef-server-ctl stop #{svc}")
   stop_service.run_command
   stop_service.error!
@@ -55,6 +61,9 @@ begin
   backup.run_command
   backup.error!
 
+  stop_pgsql = Mixlib::ShellOut.new("chef-server-ctl stop postgresql")
+  stop_pgsql.run_command
+  stop_pgsql.error!
 
   backup_data = Mixlib::ShellOut.new(
     "tar -czf #{data_file} --exclude=/etc/opscode/restore.json --exclude=/var/opt/opscode/rabbitmq/log /var/opt/opscode /etc/opscode",
@@ -82,18 +91,14 @@ end
 
 if(remote_creds)
   if(remote_directory)
-    remote = Miasma.api(:provider => remote_creds[:provider].to_s.downcase, :type => 'storage', :credentials => {:aws_iam_instance_profile => true})
-    directory = remote.buckets.get(remote_directory)
+    directory = s3.directories.get(remote_directory)
     [db_file, data_file].each do |file|
       [ :date_stamped, :latest ].each do |type|
-        remote_file = Miasma::Models::Storage::File.new(directory)
-        remote_file.name = File.join(*[
-            remote_prefix,
+        remote_file_name = File.join(*[
             type == :date_stamped ? File.basename(file) : "latest#{File.extname(file)}"
           ].flatten.compact
         )
-        remote_file.body = File.open(file, 'r')
-        remote_file.save
+        directory.files.create(key: "#{remote_prefix}/#{remote_file_name}", body: File.open(file))
       end
       File.delete(file)
     end
@@ -104,3 +109,12 @@ if(remote_creds)
 else
   puts 'WARN: No remote credentials found. Backup is local only!'
 end
+
+dead_drop_hash = {name: "backup_chef_server",
+                  ttl: 86400,
+                  output: "backed up chef server successfully",
+                  status: 0}
+
+s = TCPSocket.new 'localhost', 3030
+s.puts dead_drop_hash.to_json
+s.close
