@@ -3,7 +3,7 @@ include_recipe 'chef-server'
 
 conf_dir = node[:chef_server_populator][:base_path]
 
-org = node[:chef_server_populator][:solo_org]
+orgs = node[:chef_server_populator][:solo_org]
 user = node[:chef_server_populator][:solo_org_user]
 pass = user[:pass] || SecureRandom.urlsafe_base64(23).gsub(/^\-*/,'')
 
@@ -31,24 +31,26 @@ execute 'reconfigure for populator org create' do
   action :nothing
 end
 
-execute 'create populator org' do
-  command "chef-server-ctl org-create #{org[:org_name]} #{org[:full_name]} -a #{user[:name]}"
-  not_if "chef-server-ctl org-list | grep '^#{org[:org_name]}$'"
-  if org[:org_name] == node[:chef_server_populator][:default_org]
-    notifies :run, 'execute[reconfigure for populator org create]', :immediately
+orgs.each do |k,org|
+  execute "#{org[:org_name]} - create populator org" do
+    command "chef-server-ctl org-create #{org[:org_name]} #{org[:full_name]} -a #{user[:name]}"
+    not_if "chef-server-ctl org-list | grep '^#{org[:org_name]}$'"
+    if org[:org_name] == node[:chef_server_populator][:default_org]
+      notifies :run, 'execute[reconfigure for populator org create]', :immediately
+    end
   end
-end
 
-execute 'add populator org validator key' do
-  if (node['chef-server'][:version].to_f >= 12.1 || node['chef-server'][:version].to_f == 0.0)
-    command "chef-server-ctl add-client-key #{org[:org_name]} #{org[:org_name]}-validator --public-key-path #{conf_dir}/#{org[:validator_pub_key]} --key-name populator"
-  else
-    command "chef-server-ctl add-client-key #{org[:org_name]} #{org[:org_name]}-validator #{conf_dir}/#{org[:validator_pub_key]} --key-name populator"
-      end
-  not_if "chef-server-ctl list-client-keys #{org[:org_name]} #{org[:org_name]}-validator | grep 'name: populator$'"
-end
+  execute "#{org[:org_name]} - add populator org validator key" do
+    if (node['chef-server'][:version].to_f >= 12.1 || node['chef-server'][:version].to_f == 0.0)
+      command "chef-server-ctl add-client-key #{org[:org_name]} #{org[:org_name]}-validator --public-key-path #{conf_dir}/#{org[:validator_pub_key]} --key-name populator"
+    else
+      command "chef-server-ctl add-client-key #{org[:org_name]} #{org[:org_name]}-validator #{conf_dir}/#{org[:validator_pub_key]} --key-name populator"
+        end
+    not_if "chef-server-ctl list-client-keys #{org[:org_name]} #{org[:org_name]}-validator | grep 'name: populator$'"
+  end
 
-execute 'remove populator org default validator key' do
-  command "chef-server-ctl delete-client-key #{org[:org_name]} #{org[:org_name]}-validator default"
-  only_if "chef-server-ctl list-client-keys #{org[:org_name]} #{org[:org_name]}-validator | grep 'name: default$'"
+  execute "#{org[:org_name]} - remove populator org default validator key" do
+    command "chef-server-ctl delete-client-key #{org[:org_name]} #{org[:org_name]}-validator default"
+    only_if "chef-server-ctl list-client-keys #{org[:org_name]} #{org[:org_name]}-validator | grep 'name: default$'"
+  end
 end
