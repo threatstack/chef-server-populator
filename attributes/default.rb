@@ -39,11 +39,7 @@ default[:chef_server_populator][:backup][:schedule] = {
 #imaginable case you will want to replace some or all of these with
 #your own values.
 
-default[:chef_server_populator][:solo_org] = {
-  :org_name => 'inception_llc',
-  :full_name => 'Chef Inception Organization',
-  :validator_pub_key => 'validator_pub.pem'
-}
+default[:chef_server_populator][:solo_org] = {}
 
 default[:chef_server_populator][:solo_org_user] = {
   :name => 'populator',
