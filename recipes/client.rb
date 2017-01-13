@@ -76,10 +76,10 @@ if(node[:chef_server_populator][:databag])
           end
         end
         if(item['enabled'] == false)
-          execute "remove user: #{item['client']} from #{orgname}" do
+          execute "#{orgname} - remove user: #{item['client']}" do
             command "chef-server-ctl org-user-remove #{orgname} #{item['client']}"
           end
-          execute "delete user: #{item['client']}" do
+          execute "#{orgname} - delete user: #{item['client']}" do
             command "chef-server-ctl user-delete #{item['client']}"
             only_if "chef-server-list user-list | tr -d ' ' | grep '^#{item['client']}$'"
           end
@@ -96,11 +96,11 @@ if(node[:chef_server_populator][:databag])
               first_name = item['full_name'].split(' ').first.capitalize
               last_name = item['full_name'].split(' ').last.capitalize
               email = item.fetch('email', "#{item['client']}@example.com")
-              execute "create user: #{item['client']}" do
+              execute "#{orgname} - create user: #{item['client']}" do
                 command "chef-server-ctl user-create #{item['client']} #{first_name} #{last_name} #{email} #{item['password']} > /dev/null 2>&1"
                 not_if "chef-server-ctl user-list | grep '^#{item['client']}$'"
               end
-              execute "set user key: #{item['client']}" do
+              execute "#{orgname} - set user key: #{item['client']}" do
                 if (node['chef-server'][:version].to_f >= 12.1 || node['chef-server'][:version].to_f == 0.0)
                   command "chef-server-ctl add-user-key #{item['client']} --public-key-path #{key_file} --key-name populator"
                 else
@@ -108,11 +108,11 @@ if(node[:chef_server_populator][:databag])
                 end
                 not_if "chef-server-ctl list-user-keys #{item['client']} | grep 'name: populator$'"
               end
-              execute "delete default user key: #{item['client']}" do
+              execute "#{orgname} - delete default user key: #{item['client']}" do
                 command "chef-server-ctl delete-user-key #{item['client']} default"
                 only_if "chef-server-ctl list-user-keys #{item['client']} | grep 'name: default$'"
               end
-              execute "set user org: #{item['client']}" do
+              execute "#{orgname} - set user org: #{item['client']}" do
                 command "chef-server-ctl org-user-add #{orgname} #{item['client']} #{'--admin' if item['admin']}"
               end
             end
