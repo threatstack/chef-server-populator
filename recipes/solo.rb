@@ -81,9 +81,19 @@ else
         end
       end
 
+      # Because the cookbook_path can be either a String or an Array,
+      # we need to validate it before using it in the execute command below
+      cookbook_path = if Chef::Config[:cookbook_path].is_a? Array
+                        Chef::Config[:cookbook_path].join ':'
+                      elsif Chef::Config[:cookbook_path].is_a? String
+                        Chef::Config[:cookbook_path]
+                      else
+                        raise 'The Chef::Config[:cookbook_path] is an invalid value'
+                      end
+
       %w(apt-chef chef-server-populator).each do |cb|
         execute "#{k} - install #{cb} cookbook" do
-          command "#{knife_cmd} cookbook upload #{cb} #{knife_opts} -o #{Chef::Config[:cookbook_path].join(':')} --include-dependencies"
+          command "#{knife_cmd} cookbook upload #{cb} #{knife_opts} -o #{cookbook_path} --include-dependencies"
           only_if do
             node[:chef_server_populator][:cookbook_auto_install]
           end
