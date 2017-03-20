@@ -81,14 +81,12 @@ else
         end
       end
 
-      %w(apt-chef chef-server-populator).each do |cb|
-        execute "#{k} - install #{cb} cookbook" do
-          command "#{knife_cmd} cookbook upload #{cb} #{knife_opts} -o #{Chef::Config[:cookbook_path].join(':')} --include-dependencies"
-          only_if do
-            node[:chef_server_populator][:cookbook_auto_install]
-          end
-          retries 5
+      execute 'install chef-server-populator cookbook' do
+        command "#{knife_cmd} cookbook upload chef-server-populator #{knife_opts} -o #{Chef::Config[:cookbook_path].join(':')} --include-dependencies"
+        only_if do
+          node[:chef_server_populator][:cookbook_auto_install]
         end
+        retries 5
       end
     end
 end
