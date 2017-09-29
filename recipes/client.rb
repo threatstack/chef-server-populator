@@ -87,7 +87,8 @@ if(node[:chef_server_populator][:databag])
           if(item['pub_key'])
             unless item['pub_key'].to_s.empty?
               key_file = "#{Chef::Config[:file_cache_path]}/#{item['client']}.pub"
-              file key_file do
+              file "Setup #{item['client']} key file" do
+                path key_file
                 backup false
                 content item['pub_key']
                 mode '0400'
