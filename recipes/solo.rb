@@ -40,8 +40,8 @@ if(node[:chef_server_populator][:backup][:remote][:connection])
         file.print data
       end
     end
-    node.set[:chef_server_populator][:restore][:file] = local_dump
-    node.set[:chef_server_populator][:restore][:data] = local_gz
+    node.normal[:chef_server_populator][:restore][:file] = local_dump
+    node.normal[:chef_server_populator][:restore][:data] = local_gz
   end
 end
 
