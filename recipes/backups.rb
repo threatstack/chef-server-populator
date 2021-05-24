@@ -54,11 +54,8 @@ template '/usr/local/bin/chef-server-backup' do
 end
 
 cron 'Chef Server Backups' do
-  command <<-EOF
-  BUNDLE_GEMFILE=/etc/opscode/Gemfile bundle install --path /etc/opscode/.vendor && BUNDLE_GEMFILE=/etc/opscode/Gemfile bundle exec /usr/local/bin/chef-server-backup
-  EOF
+  command '/usr/local/bin/chef-server-backup'
   node[:chef_server_populator][:backup][:schedule].each do |k,v|
     send(k,v)
   end
-  path "/opt/opscode/embedded/bin/:/usr/bin:/usr/local/bin:/bin"
 end
